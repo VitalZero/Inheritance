@@ -52,10 +52,7 @@ public:
 			hp += recover;
 		}
 	}
-	virtual void SpecialMove(MemeFighter& target)
-	{
-		std::cout << "You will never get this!\n";
-	}
+	virtual void SpecialMove(MemeFighter& target) = 0;
 protected:
 	MemeFighter(const std::string& name, int hp, int speed, int power)
 		:
