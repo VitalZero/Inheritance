@@ -2,6 +2,7 @@
 #include <string>
 #include <conio.h>
 #include <random>
+#include <algorithm>
 
 class Dice
 {
@@ -43,16 +44,17 @@ public:
 			ApplyDamageTo(target, power + Roll(2) );
 		}
 	}
-	void Tick()
+	virtual void Tick()
 	{
 		if (IsAlive())
 		{
 			int recover = Roll(1);
-			std::cout << "1 turn has elapsed and " << name << " gains " << recover << "hp.\n";
+			std::cout << name << " gains " << recover << "hp.\n";
 			hp += recover;
 		}
 	}
 	virtual void SpecialMove(MemeFighter& target) = 0;
+	virtual ~MemeFighter() = default;
 protected:
 	MemeFighter(const std::string& name, int hp, int speed, int power)
 		:
@@ -107,7 +109,7 @@ public:
 			}
 		}
 	}
-	void Tick()
+	void Tick() override
 	{
 		if (IsAlive())
 		{
@@ -115,6 +117,10 @@ public:
 			ApplyDamageTo(*this, Roll());
 			MemeFighter::Tick();
 		}
+	}
+	~MemeFrog()
+	{
+		std::cout << "Destroying MemeFrog " << name << "!" << std::endl;
 	}
 private:
 };
@@ -143,6 +149,10 @@ public:
 				std::cout << name << " spaces out.\n";
 			}
 		}
+	}
+	~MemeStoner()
+	{
+		std::cout << "Destroying MemeStoner " << name << "!" << std::endl;
 	}
 };
 
@@ -178,18 +188,46 @@ void DoSpecials(MemeFighter& f1, MemeFighter& f2)
 
 int main()
 {
-	MemeFrog f1( "Dat Boi" );
-	MemeStoner f2( "Good Guy Greg" );
+	std::vector<MemeFighter*> t1 = { 
+		new MemeFrog("Dat Boi"), 
+		new MemeStoner("Good Guy Greg"), 
+		new MemeFrog("the WB frog")
+	};
 
-	while( f1.IsAlive() && f2.IsAlive() )
+	std::vector<MemeFighter*> t2 = {
+		new MemeStoner("Chong"),
+		new MemeStoner("Scumbag Steve"),
+		new MemeFrog("Pepe")
+	};
+
+	const auto alive_pred = [](MemeFighter* pf) { return pf->IsAlive(); };
+
+	while ( std::any_of(t1.begin(), t1.end(), alive_pred) &&
+		std::any_of(t2.begin(), t2.end(), alive_pred) )
 	{
-		// trade blows
-		Engage( f1,f2 );
-		// special moves
-		DoSpecials(f1, f2);
+		// random shuffle
+		std::random_shuffle(t1.begin(), t1.end());
+		std::partition(t1.begin(), t1.end(), alive_pred);
+		std::random_shuffle(t2.begin(), t2.end());
+		std::partition(t2.begin(), t2.end(), alive_pred);
+
+		for (size_t i = 0; i < t1.size(); ++i)
+		{
+			// trade blows
+			Engage(*t1[i], *t2[i]);
+			// special moves
+			DoSpecials(*t1[i], *t2[i]);
+			std::cout << "---------------------------------------" << std::endl;
+		}
+		std::cout << "=======================================" << std::endl;
+		
 		// end of turn maintainence
-		f1.Tick();
-		f2.Tick();
+		for (size_t i = 0; i < t1.size(); ++i)
+		{
+			t1[i]->Tick();
+			t2[i]->Tick();
+		}
+		std::cout << "=======================================" << std::endl;
 
 		std::cout << "Press any key to continue...";
 		while( !_kbhit() );
@@ -197,14 +235,21 @@ int main()
 		std::cout << std::endl << std::endl;
 	}
 
-	if( f1.IsAlive() )
+	if( std::any_of(t1.begin(), t1.end(), alive_pred ) )
 	{
-		std::cout << f1.GetName() << " is victorious!";
+		std::cout << "Team ONE is victorious!" << std::endl;
 	}
 	else
 	{
-		std::cout << f2.GetName() << " is victorious!";
+		std::cout << "Team TWO is victorious!" << std::endl;
+	}
+	for (size_t i = 0; i < t1.size(); ++i)
+	{
+		delete t1[i];
+		delete t2[i];
 	}
 	while( !_kbhit() );
+
+
 	return 0;
 }
