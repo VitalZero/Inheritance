@@ -70,7 +70,7 @@ public:
 	{
 		if (IsAlive() && target.IsAlive())
 		{
-			std::cout << name << " attacks " << target.name << "with his " << pWeapon->GetName() << "!.\n";
+			std::cout << name << " attacks " << target.name << " with his " << pWeapon->GetName() << "!.\n";
 			assert(pWeapon != nullptr);
 			ApplyDamageTo(target, pWeapon->CalculateDamage(attr, dice) );
 		}
@@ -100,6 +100,14 @@ public:
 		auto pWep = pWeapon;
 		pWeapon = nullptr;
 		return pWep;
+	}
+	bool HasWeapon() const
+	{
+		return pWeapon != nullptr;
+	}
+	const Weapon& GetWeapon() const
+	{
+		return *pWeapon;
 	}
 protected:
 	MemeFighter(const std::string& name, int hp, int speed, int power, Weapon* pWeapon = nullptr)
@@ -239,6 +247,19 @@ public:
 	}
 };
 
+void TakeWeaponIfDead(MemeFighter& taker, MemeFighter& giver)
+{
+	if (taker.IsAlive() && !giver.IsAlive() && giver.HasWeapon())
+	{
+		if (giver.GetWeapon().GetRank() > taker.GetWeapon().GetRank())
+		{
+			std::cout << taker.GetName() << " takes the " << giver.GetWeapon().GetName()
+				<< " from " << giver.GetName() << "'s still-cooling corpse\n";
+			taker.GiveWeapon(giver.PilferWeapon());
+		}
+	}
+}
+
 void Engage( MemeFighter& f1,MemeFighter& f2 )
 {
 	// pointers for sorting purposes
@@ -251,7 +272,9 @@ void Engage( MemeFighter& f1,MemeFighter& f2 )
 	}
 	// execute attacks
 	p1->Attack( *p2 );
+	TakeWeaponIfDead(*p1, *p2);
 	p2->Attack( *p1 );
+	TakeWeaponIfDead(*p2, *p1);
 }
 
 void DoSpecials(MemeFighter& f1, MemeFighter& f2)
@@ -266,7 +289,9 @@ void DoSpecials(MemeFighter& f1, MemeFighter& f2)
 	}
 	// execute attacks
 	p1->SpecialMove(*p2);
+	TakeWeaponIfDead(*p1, *p2);
 	p2->SpecialMove(*p1);
+	TakeWeaponIfDead(*p2, *p1);
 }
 
 int main()
