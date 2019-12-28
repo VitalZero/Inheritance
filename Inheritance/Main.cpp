@@ -46,6 +46,7 @@ public:
 		return rank;
 	}
 	virtual int CalculateDamage(const Attributes& attr, Dice& d) const = 0;
+	virtual ~Weapon() = default;
 private:
 	std::string name;
 	int rank;
@@ -209,11 +210,39 @@ public:
 			MemeFighter::Tick();
 		}
 	}
-	~MemeFrog()
+	~MemeFrog() override
 	{
 		std::cout << "Destroying MemeFrog " << name << "!" << std::endl;
 	}
 private:
+};
+
+class MemeCat : public MemeFighter
+{
+public:
+	MemeCat(const std::string& name, Weapon* pWeapon = nullptr)
+		:
+		MemeFighter(name, 65, 9, 14, pWeapon)
+	{}
+	void SpecialMove(MemeFighter& other) override
+	{
+		if (IsAlive())
+		{
+			if (Roll() > 2)
+			{
+				std::cout << GetName() << " eats a cheeseburger and gains 20 hp.\n";
+				attr.hp += 20;
+			}
+			else
+			{
+				std::cout << GetName() << " meows demurely.\n";
+			}
+		}
+	}
+	~MemeCat() override
+	{
+		std::cout << "Destroying MemeCat " << name << "!" << std::endl;
+	}
 };
 
 class MemeStoner : public MemeFighter
@@ -241,7 +270,7 @@ public:
 			}
 		}
 	}
-	~MemeStoner()
+	~MemeStoner() override 
 	{
 		std::cout << "Destroying MemeStoner " << name << "!" << std::endl;
 	}
@@ -299,11 +328,11 @@ int main()
 	std::vector<MemeFighter*> t1 = { 
 		new MemeFrog("Dat Boi", new Fists), 
 		new MemeStoner("Good Guy Greg", new Bat), 
-		new MemeFrog("the WB frog", new Knife)
+		new MemeCat("Haz cheeseburger", new Knife)
 	};
 
 	std::vector<MemeFighter*> t2 = {
-		new MemeStoner("Chong", new Fists),
+		new MemeCat("NEDM", new Fists),
 		new MemeStoner("Scumbag Steve", new Bat),
 		new MemeFrog("Pepe", new Knife)
 	};
