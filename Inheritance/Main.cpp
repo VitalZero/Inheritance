@@ -258,6 +258,18 @@ public:
 		{
 			if (Roll() > 3)
 			{
+				if(MemeFrog* pFrog = dynamic_cast<MemeFrog*>(&target) )
+				{
+					std::cout << GetName() + " says: 'Oh sweet dude, it's a cool little froggie bro!'.\n";
+				}
+				if (MemeStoner* pStoner = dynamic_cast<MemeStoner*>(&target))
+				{
+					std::cout << GetName() + " says: 'Duuuuude'.\n";
+				}
+				if (MemeCat* pCat = dynamic_cast<MemeCat*>(&target))
+				{
+					std::cout << GetName() + " says: 'Hey kitty bro, can I pet you?'.\n";
+				}
 				std::cout << name << " smokes the danky sticky icky, becoming Super " << name << "!.\n";
 				name = "Super " + name;
 				attr.speed += 3;
