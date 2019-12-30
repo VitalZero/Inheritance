@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <assert.h>
 #include <typeinfo>
+#include <memory>
 
 class Dice
 {
@@ -87,21 +88,13 @@ public:
 		}
 	}
 	virtual void SpecialMove(MemeFighter& target) = 0;
-	virtual ~MemeFighter()
+	void GiveWeapon(std::unique_ptr<Weapon> pNewWeapon)
 	{
-		delete pWeapon;
-		pWeapon = nullptr;
+		pWeapon = std::move( pNewWeapon );
 	}
-	void GiveWeapon(Weapon* pNewWeapon)
+	std::unique_ptr<Weapon> PilferWeapon()
 	{
-		delete pWeapon;
-		pWeapon = pNewWeapon;
-	}
-	Weapon* PilferWeapon()
-	{
-		auto pWep = pWeapon;
-		pWeapon = nullptr;
-		return pWep;
+		return std::move(pWeapon);
 	}
 	bool HasWeapon() const
 	{
@@ -112,11 +105,11 @@ public:
 		return *pWeapon;
 	}
 protected:
-	MemeFighter(const std::string& name, int hp, int speed, int power, Weapon* pWeapon = nullptr)
+	MemeFighter(const std::string& name, int hp, int speed, int power, std::unique_ptr<Weapon> pWeapon)
 		:
 		name(name),
-		attr({ hp, speed, power } ),
-		pWeapon(pWeapon)
+		attr( { hp, speed, power } ),
+		pWeapon( std::move(pWeapon) )
 	{
 		std::cout << GetName() << " enters the ring.\n";
 	}
@@ -137,7 +130,7 @@ protected:
 	Attributes attr;
 	std::string name;
 private:
-	Weapon* pWeapon = nullptr;
+	std::unique_ptr<Weapon> pWeapon;
 	mutable Dice dice;
 };
 
@@ -183,9 +176,9 @@ public:
 class MemeFrog : public MemeFighter
 {
 public:
-	MemeFrog(const std::string& name, Weapon* pWeapon = nullptr)
+	MemeFrog(const std::string& name, std::unique_ptr<Weapon> pWeapon)
 		:
-		MemeFighter(name, 69, 7, 14, pWeapon)
+		MemeFighter(name, 69, 7, 14, std::move(pWeapon))
 	{}
 	void SpecialMove(MemeFighter& target) override
 	{
@@ -211,19 +204,19 @@ public:
 			MemeFighter::Tick();
 		}
 	}
-	~MemeFrog() override
+	/*~MemeFrog()
 	{
 		std::cout << "Destroying MemeFrog " << name << "!" << std::endl;
-	}
+	}*/
 private:
 };
 
 class MemeCat : public MemeFighter
 {
 public:
-	MemeCat(const std::string& name, Weapon* pWeapon = nullptr)
+	MemeCat(const std::string& name, std::unique_ptr<Weapon> pWeapon)
 		:
-		MemeFighter(name, 65, 9, 14, pWeapon)
+		MemeFighter(name, 65, 9, 14, std::move(pWeapon) )
 	{}
 	void SpecialMove(MemeFighter& other) override
 	{
@@ -240,18 +233,18 @@ public:
 			}
 		}
 	}
-	~MemeCat() override
+	/*~MemeCat()
 	{
 		std::cout << "Destroying MemeCat " << name << "!" << std::endl;
-	}
+	}*/
 };
 
 class MemeStoner : public MemeFighter
 {
 public:
-	MemeStoner(const std::string& name, Weapon* pWeapon = nullptr)
+	MemeStoner(const std::string& name, std::unique_ptr<Weapon> pWeapon)
 		:
-		MemeFighter(name, 80, 4, 10, pWeapon)
+		MemeFighter(name, 80, 4, 10, std::move(pWeapon) )
 	{}
 	void SpecialMove(MemeFighter& target) override
 	{
@@ -283,10 +276,10 @@ public:
 			}
 		}
 	}
-	~MemeStoner() override 
+	/*~MemeStoner()  
 	{
 		std::cout << "Destroying MemeStoner " << name << "!" << std::endl;
-	}
+	}*/
 };
 
 void TakeWeaponIfDead(MemeFighter& taker, MemeFighter& giver)
@@ -307,11 +300,13 @@ void Engage( MemeFighter& f1,MemeFighter& f2 )
 	// pointers for sorting purposes
 	auto* p1 = &f1;
 	auto* p2 = &f2;
+
 	// determine attack order
 	if( p1->GetInitiative() < p2->GetInitiative() )
 	{
 		std::swap( p1,p2 );
 	}
+
 	// execute attacks
 	p1->Attack( *p2 );
 	TakeWeaponIfDead(*p1, *p2);
@@ -348,26 +343,26 @@ bool AreSameType(MemeFighter& f1, MemeFighter& f2)
 
 int main()
 {
-	std::vector<MemeFighter*> t1 = { 
-		new MemeFrog("Dat Boi", new Fists), 
-		new MemeStoner("Good Guy Greg", new Bat), 
-		new MemeCat("Haz cheeseburger", new Knife)
-	};
+	std::vector<std::unique_ptr<MemeFighter>> t1;
+	t1.push_back(std::make_unique<MemeFrog>("Dat Boi", std::make_unique<Fists>() ) );
+	t1.push_back(std::make_unique<MemeStoner>("Good Guy Greg", std::make_unique<Bat>() ) );
+	t1.push_back(std::make_unique<MemeCat>("Haz cheeseburger", std::make_unique<Knife>() ) );
 
-	std::vector<MemeFighter*> t2 = {
-		new MemeCat("NEDM", new Fists),
-		new MemeStoner("Scumbag Steve", new Bat),
-		new MemeFrog("Pepe", new Knife)
-	};
+	std::vector<std::unique_ptr<MemeFighter>> t2;
+	t2.push_back(std::make_unique<MemeCat>("NEDM", std::make_unique<Fists>() ) );
+	t2.push_back(std::make_unique<MemeStoner>("Scumbag Steve", std::make_unique<Bat>() ) );
+	t2.push_back(std::make_unique<MemeFrog>("Pepe", std::make_unique<Knife>() ) );
 
 	std::cout << std::boolalpha << AreSameType(*t1[0], *t2[2]) << std::endl;
 	std::cout << std::boolalpha << AreSameType(*t1[0], *t2[0]) << std::endl;
 	std::cout << typeid(*t1[0]).name() << std::endl;
 
-	const auto alive_pred = [](MemeFighter* pf) { return pf->IsAlive(); };
+	const auto alive_pred = [](const std::unique_ptr<MemeFighter>& pf) { return pf->IsAlive(); };
 
-	while ( std::any_of(t1.begin(), t1.end(), alive_pred) &&
-		std::any_of(t2.begin(), t2.end(), alive_pred) )
+	while ( 
+		std::any_of(t1.begin(), t1.end(), alive_pred) &&
+		std::any_of(t2.begin(), t2.end(), alive_pred) 
+		)
 	{
 		// random shuffle
 		std::random_shuffle(t1.begin(), t1.end());
@@ -407,13 +402,8 @@ int main()
 	{
 		std::cout << "Team TWO is victorious!" << std::endl;
 	}
-	for (size_t i = 0; i < t1.size(); ++i)
-	{
-		delete t1[i];
-		delete t2[i];
-	}
+
 	while( !_kbhit() );
-
-
+	
 	return 0;
 }
