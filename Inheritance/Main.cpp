@@ -4,6 +4,7 @@
 #include <random>
 #include <algorithm>
 #include <assert.h>
+#include <typeinfo>
 
 class Dice
 {
@@ -258,15 +259,15 @@ public:
 		{
 			if (Roll() > 3)
 			{
-				if(MemeFrog* pFrog = dynamic_cast<MemeFrog*>(&target) )
+				if( typeid(MemeFrog) == typeid(target) )
 				{
 					std::cout << GetName() + " says: 'Oh sweet dude, it's a cool little froggie bro!'.\n";
 				}
-				if (MemeStoner* pStoner = dynamic_cast<MemeStoner*>(&target))
+				else if ( typeid(MemeStoner) == typeid(target) )
 				{
 					std::cout << GetName() + " says: 'Duuuuude'.\n";
 				}
-				if (MemeCat* pCat = dynamic_cast<MemeCat*>(&target))
+				else if ( typeid(MemeCat) == typeid(target) )
 				{
 					std::cout << GetName() + " says: 'Hey kitty bro, can I pet you?'.\n";
 				}
@@ -335,6 +336,16 @@ void DoSpecials(MemeFighter& f1, MemeFighter& f2)
 	TakeWeaponIfDead(*p2, *p1);
 }
 
+bool AreSameType(MemeFighter& f1, MemeFighter& f2)
+{
+	if (typeid(f1) == typeid(f2))
+	{
+		return true;
+	}
+
+	return false;
+}
+
 int main()
 {
 	std::vector<MemeFighter*> t1 = { 
@@ -348,6 +359,10 @@ int main()
 		new MemeStoner("Scumbag Steve", new Bat),
 		new MemeFrog("Pepe", new Knife)
 	};
+
+	std::cout << std::boolalpha << AreSameType(*t1[0], *t2[2]) << std::endl;
+	std::cout << std::boolalpha << AreSameType(*t1[0], *t2[0]) << std::endl;
+	std::cout << typeid(*t1[0]).name() << std::endl;
 
 	const auto alive_pred = [](MemeFighter* pf) { return pf->IsAlive(); };
 
